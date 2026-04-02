@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="קבלות">
+<title>ניתוח קבלות</title>
+<link rel="manifest" href="#" id="manifestLink">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0a0a0a;
+  --bg2: #111;
+  --surface: #161616;
+  --surface2: #1e1e1e;
+  --border: #252525;
+  --border2: #2e2e2e;
+  --accent: #c8f060;
+  --accent2: #60f0d0;
+  --accent3: #f060c8;
+  --text: #efefef;
+  --text2: #999;
+  --danger: #ff5f5f;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Heebo', sans-serif;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── App shell ── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+/* ── Nav bar ── */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+
+.nav-title {
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  background: linear-gradient(120deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.nav-btn:active { background: var(--surface2); }
+
+/* ── Bottom tab bar ── */
+.tab-bar {
+  display: flex;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 0 8px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text2);
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.tab-item.active { color: var(--accent); }
+.tab-item .tab-icon { font-size: 1.3rem; }
+
+/* ── Screen container ── */
+.screen {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: none;
+}
+.screen.active { display: block; }
+
+/* ── Scan screen ── */
+.scan-screen { padding: 16px; }
+
+.upload-area {
+  border: 2px dashed var(--border2);
+  border-radius: 20px;
+  padding: 36px 20px;
+  text-align: center;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(200,240,96,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.upload-area:active { border-color: var(--accent); background: #141a08; }
+.upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+.upload-icon-big { font-size: 3.5rem; margin-bottom: 10px; }
+.upload-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
+.upload-sub { color: var(--text2); font-size: 0.83rem; line-height: 1.5; }
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+  color: var(--text2);
+  font-size: 0.8rem;
+}
+.or-divider::before, .or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* paste box */
+.paste-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+}
+.paste-label { font-size: 0.82rem; font-weight: 700; color: var(--text2); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.paste-steps { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.paste-step { display: flex; align-items: flex-start; gap: 8px; font-size: 0.82rem; color: var(--text2); line-height: 1.4; }
+.step-num { background: var(--accent); color: #0a0a0a; font-weight: 900; font-size: 0.7rem; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+textarea.paste-input {
+  width: 100%;
+  min-height: 100px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.85rem;
+  padding: 10px 12px;
+  resize: none;
+  outline: none;
+  direction: rtl;
+  transition: border-color 0.2s;
+}
+textarea.paste-input:focus { border-color: var(--accent); }
+
+/* preview strip */
+.preview-strip {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.preview-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--border2);
+}
+.preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.preview-thumb .remove-btn {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  background: rgba(0,0,0,0.7);
+  border: none;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.add-more-thumb {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  border: 2px dashed var(--border2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  color: var(--text2);
+  gap: 3px;
+  cursor: pointer;
+  position: relative;
+}
+.add-more-thumb input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* Analyze button */
+.analyze-btn {
+  width: 100%;
+  padding: 15px;
+  border-radius: 14px;
+  border: none;
+  background: var(--accent);
+  color: #0a0a0a;
+  font-family: 'Heebo', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 900;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.analyze-btn:active { transform: scale(0.98); }
+.analyze-btn:disabled { background: var(--surface2); color: var(--text2); cursor: not-allowed; transform: none; }
+
+/* ── Loading overlay ── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,10,0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+.spinner {
+  width: 52px;
+  height: 52px;
+  border: 3px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { color: var(--text2); font-size: 0.9rem; text-align: center; line-height: 1.6; }
+
+/* ── Result card ── */
+.result-sheet {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 90;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-top: var(--safe-top);
+  padding-bottom: calc(var(--safe-bottom) + 16px);
+}
+
+.result-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.back-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.result-content { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+/* store header */
+.store-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.store-name { font-size: 1.25rem; font-weight: 900; }
+.store-date { color: var(--text2); font-size: 0.78rem; margin-top: 3px; }
+.total-pill {
+  background: var(--accent);
+  color: #0a0a0a;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-weight: 900;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* stats */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 8px;
+  text-align: center;
+}
+.stat-val { font-size: 1.3rem; font-weight: 900; color: var(--accent); }
+.stat-lbl { font-size: 0.68rem; color: var(--text2); margin-top: 2px; }
+
+/* section */
+.section-lbl {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text2);
+}
+
+/* categories */
+.cats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 13px;
+}
+.cat-name { font-size: 0.82rem; font-weight: 700; margin-bottom: 3px; }
+.cat-amount { font-size: 1rem; font-weight: 900; color: var(--accent); }
+.cat-pct { font-size: 0.7rem; color: var(--text2); }
+.cat-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.cat-bar-fill { height: 100%; border-radius: 2px; }
+
+/* items */
+.items-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.item-row:last-child { border-bottom: none; }
+.item-name { flex: 1; font-size: 0.88rem; font-weight: 500; }
+.item-qty { font-size: 0.75rem; color: var(--text2); background: var(--surface2); padding: 2px 7px; border-radius: 5px; flex-shrink: 0; }
+.item-price { font-weight: 700; font-size: 0.9rem; color: var(--accent2); min-width: 56px; text-align: left; direction: ltr; flex-shrink: 0; }
+
+/* insights */
+.insights-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.insight-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+.insight-row:last-child { border-bottom: none; }
+
+/* save button */
+.save-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.save-btn:active { background: var(--border); }
+
+/* ── History screen ── */
+.history-screen { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text2);
+}
+.history-empty .empty-icon { font-size: 3.5rem; }
+.history-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.history-card:active { background: var(--surface2); }
+.history-store { font-size: 1rem; font-weight: 800; }
+.history-meta { font-size: 0.75rem; color: var(--text2); margin-top: 3px; }
+.history-total {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-weight: 900;
+  font-size: 0.95rem;
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.history-delete {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Settings screen ── */
+.settings-screen { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.settings-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.settings-row {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-label { font-size: 0.8rem; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
+.settings-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.85rem;
+  padding: 10px 12px;
+  outline: none;
+  direction: ltr;
+  transition: border-color 0.2s;
+}
+.settings-input:focus { border-color: var(--accent); }
+.settings-hint { font-size: 0.74rem; color: var(--text2); margin-top: 6px; line-height: 1.4; }
+.settings-save-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  background: var(--accent);
+  color: #0a0a0a;
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+.settings-save-btn:active { opacity: 0.85; }
+
+.install-banner {
+  background: linear-gradient(135deg, #141a08, #0a1410);
+  border: 1px solid #2a3a10;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.install-banner h3 { font-size: 0.95rem; font-weight: 800; color: var(--accent); }
+.install-banner p { font-size: 0.8rem; color: var(--text2); line-height: 1.5; }
+.install-steps { display: flex; flex-direction: column; gap: 6px; }
+.install-step { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text2); }
+.install-step .step-num { background: var(--accent); color: #0a0a0a; }
+
+.stats-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.stats-summary h3 { font-size: 0.85rem; font-weight: 800; color: var(--text2); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.summary-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+.summary-row:last-child { border-bottom: none; }
+.summary-val { font-weight: 800; color: var(--accent); }
+
+.toast {
+  position: fixed;
+  bottom: calc(70px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 200;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.error-card {
+  background: #140a0a;
+  border: 1px solid #3a1010;
+  border-radius: 12px;
+  padding: 14px;
+  color: var(--danger);
+  font-size: 0.88rem;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 12px;
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Nav bar -->
+  <div class="nav-bar">
+    <span class="nav-title">🧾 ניתוח קבלות</span>
+    <button class="nav-btn" onclick="showSettings()" title="הגדרות">⚙️</button>
+  </div>
+
+  <!-- ── SCAN SCREEN ── -->
+  <div class="screen active" id="scanScreen">
+    <div class="scan-screen">
+
+      <!-- Upload zone -->
+      <div class="upload-area" id="uploadArea" onclick="triggerFileInput()">
+        <input type="file" id="mainFileInput" accept="image/*" multiple style="display:none" onchange="handleFiles(this.files)">
+        <div class="upload-icon-big">📷</div>
+        <div class="upload-title">צלם או העלה קבלה</div>
+        <div class="upload-sub">לחץ לפתיחת מצלמה / גלריה<br>ניתן לבחור <strong>כמה תמונות</strong></div>
+      </div>
+
+      <!-- Preview strip -->
+      <div class="preview-strip" id="previewStrip" style="display:none"></div>
+
+      <!-- OR divider -->
+      <div class="or-divider">או</div>
+
+      <!-- Paste text box -->
+      <div class="paste-box">
+        <div class="paste-label">🔗 קבלה דיגיטלית (רמי לוי, שופרסל...)</div>
+        <div class="paste-steps">
+          <div class="paste-step"><div class="step-num">1</div><span>פתח קישור קבלה בדפדפן ולחץ <strong>אישור</strong></span></div>
+          <div class="paste-step"><div class="step-num">2</div><span>לחיצה ארוכה על הדף ← בחר הכל ← העתק</span></div>
+          <div class="paste-step"><div class="step-num">3</div><span>הדבק כאן:</span></div>
+        </div>
+        <textarea class="paste-input" id="pasteInput" placeholder="הדבק טקסט קבלה כאן..." oninput="updateAnalyzeBtn()"></textarea>
+      </div>
+
+      <!-- Error -->
+      <div id="scanError" class="error-card" style="display:none">
+        <span>⚠️</span><span id="scanErrorMsg"></span>
+      </div>
+
+      <!-- Analyze button -->
+      <button class="analyze-btn" id="analyzeBtn" disabled onclick="analyze()">
+        🔍 נתח קבלה
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ── HISTORY SCREEN ── -->
+  <div class="screen" id="historyScreen">
+    <div class="history-screen" id="historyList"></div>
+  </div>
+
+  <!-- ── SETTINGS SCREEN ── -->
+  <div class="screen" id="settingsScreen">
+    <div class="settings-screen">
+
+      <div class="settings-section">
+        <div class="settings-row">
+          <div class="settings-label">🔑 מפתח API של Anthropic</div>
+          <input type="password" class="settings-input" id="apiKeyInput" placeholder="sk-ant-...">
+          <div class="settings-hint">נדרש לניתוח קבלות. המפתח נשמר <strong>רק על המכשיר שלך</strong> ולא נשלח לשום שרת.<br>
+          לקבלת מפתח: <span style="color:var(--accent)">console.anthropic.com</span></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">🏪 שם ברירת מחדל לחנות</div>
+          <input type="text" class="settings-input" id="defaultStoreInput" placeholder="השאר ריק לזיהוי אוטומטי" dir="rtl">
+        </div>
+      </div>
+
+      <button class="settings-save-btn" onclick="saveSettings()">💾 שמור הגדרות</button>
+
+      <div class="stats-summary" id="statsSummary"></div>
+
+      <div class="install-banner">
+        <h3>📲 התקן כאפליקציה</h3>
+        <p>להוספת האפליקציה למסך הבית:</p>
+        <div class="install-steps">
+          <div class="install-step"><div class="step-num">1</div><span>Chrome: לחץ על תפריט ⋮ ← "הוסף למסך הבית"</span></div>
+          <div class="install-step"><div class="step-num">2</div><span>Safari: לחץ על שתף ← "הוסף למסך הבית"</span></div>
+          <div class="install-step"><div class="step-num">3</div><span>האפליקציה תיפתח במסך מלא ללא דפדפן</span></div>
+        </div>
+      </div>
+
+      <div style="text-align:center; color:var(--text2); font-size:0.75rem; padding:8px 0">
+        גרסה 1.0 · כל הנתונים נשמרים מקומית על המכשיר
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom tab bar -->
+  <div class="tab-bar">
+    <button class="tab-item active" id="tabScan" onclick="switchTab('scan')">
+      <span class="tab-icon">📷</span>סריקה
+    </button>
+    <button class="tab-item" id="tabHistory" onclick="switchTab('history')">
+      <span class="tab-icon">📋</span>היסטוריה
+    </button>
+    <button class="tab-item" id="tabSettings" onclick="switchTab('settings')">
+      <span class="tab-icon">⚙️</span>הגדרות
+    </button>
+  </div>
+
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display:none">
+  <div class="spinner"></div>
+  <div class="loading-text">מנתח את הקבלה...<br>זה עשוי לקחת מספר שניות</div>
+</div>
+
+<!-- Result sheet -->
+<div class="result-sheet" id="resultSheet" style="display:none">
+  <div class="result-nav">
+    <button class="back-btn" onclick="closeResult()">← חזור</button>
+    <span id="resultNavTitle" style="font-weight:800; font-size:0.95rem; flex:1; text-align:center"></span>
+    <button class="back-btn" onclick="saveCurrentResult()" id="resultSaveBtn">💾</button>
+  </div>
+  <div class="result-content" id="resultContent"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DB ──────────────────────────────────────────────────────────
+let db;
+const DB_NAME = 'ReceiptAnalyzerDB';
+const DB_VERSION = 1;
+
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('receipts')) {
+        const store = d.createObjectStore('receipts', { keyPath: 'id', autoIncrement: true });
+        store.createIndex('date', 'savedAt', { unique: false });
+      }
+      if (!d.objectStoreNames.contains('settings')) {
+        d.createObjectStore('settings', { keyPath: 'key' });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(); };
+    req.onerror = reject;
+  });
+}
+
+function dbGet(storeName, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const req = tx.objectStore(storeName).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = reject;
+  });
+}
+
+function dbPut(storeName, value) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    const req = tx.objectStore(storeName).put(value);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = reject;
+  });
+}
+
+function dbGetAll(storeName) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const req = tx.objectStore(storeName).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = reject;
+  });
+}
+
+function dbDelete(storeName, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    const req = tx.objectStore(storeName).delete(key);
+    req.onsuccess = () => resolve();
+    req.onerror = reject;
+  });
+}
+
+// ── State ───────────────────────────────────────────────────────
+let selectedImages = []; // [{base64, mimeType, src}]
+let currentResult = null;
+let apiKey = '';
+
+// ── Init ────────────────────────────────────────────────────────
+async function init() {
+  await initDB();
+  const stored = await dbGet('settings', 'apiKey');
+  if (stored) apiKey = stored.value;
+  const defStore = await dbGet('settings', 'defaultStore');
+  if (defStore) document.getElementById('defaultStoreInput').value = defStore.value;
+  document.getElementById('apiKeyInput').value = apiKey ? '••••••••••••••••' : '';
+  updateAnalyzeBtn();
+}
+
+// ── Tab switching ───────────────────────────────────────────────
+function switchTab(tab) {
+  ['scan','history','settings'].forEach(t => {
+    document.getElementById(t+'Screen').classList.toggle('active', t === tab);
+    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t === tab);
+  });
+  if (tab === 'history') renderHistory();
+  if (tab === 'settings') renderStats();
+}
+
+function showSettings() { switchTab('settings'); }
+
+// ── File handling ───────────────────────────────────────────────
+function triggerFileInput() {
+  document.getElementById('mainFileInput').click();
+}
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      selectedImages.push({ base64: e.target.result.split(',')[1], mimeType: file.type, src: e.target.result });
+      renderPreviews();
+      updateAnalyzeBtn();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function removeImage(idx) {
+  selectedImages.splice(idx, 1);
+  renderPreviews();
+  updateAnalyzeBtn();
+}
+
+function renderPreviews() {
+  const strip = document.getElementById('previewStrip');
+  if (selectedImages.length === 0) { strip.style.display = 'none'; strip.innerHTML = ''; return; }
+  strip.style.display = 'flex';
+  strip.innerHTML = selectedImages.map((img, i) => `
+    <div class="preview-thumb">
+      <img src="${img.src}" />
+      <button class="remove-btn" onclick="removeImage(${i});event.stopPropagation()">✕</button>
+    </div>
+  `).join('') + `
+    <div class="add-more-thumb">
+      <input type="file" accept="image/*" multiple onchange="handleFiles(this.files);this.value=''">
+      <span style="font-size:1.4rem">+</span>
+      <span>עוד</span>
+    </div>`;
+}
+
+function updateAnalyzeBtn() {
+  const hasImages = selectedImages.length > 0;
+  const hasText = document.getElementById('pasteInput').value.trim().length > 20;
+  document.getElementById('analyzeBtn').disabled = !hasImages && !hasText;
+  document.getElementById('scanError').style.display = 'none';
+}
+
+// ── Analysis ────────────────────────────────────────────────────
+const CATEGORY_COLORS = ['#c8f060','#60f0d0','#f060c8','#f0d060','#60a8f0','#f09060','#a860f0','#60f0a8'];
+
+const PROMPT_SUFFIX = `
+נתח את הקבלה והחזר JSON בלבד, ללא backticks, ללא הסברים:
+{
+  "store": "שם החנות",
+  "date": "תאריך",
+  "total": מספר,
+  "items_count": מספר,
+  "items": [
+    { "name": "שם המוצר בעברית", "qty": מספר, "unit_price": מספר, "total_price": מספר, "category": "קטגוריה" }
+  ],
+  "categories": [{ "name": "שם קטגוריה", "total": מספר }],
+  "insights": ["תובנה 1", "תובנה 2", "תובנה 3"]
+}
+מוצרים עם מבצע/הנחה — כלול את המחיר הסופי אחרי ההנחה.
+קטגוריות: ירקות ופירות, בשר ודגים, מוצרי חלב, לחם ומאפים, שימורים ויבשים, משקאות, חטיפים וממתקים, ניקיון ותכשירים, אחר.
+אם אין קבלת קנייה, החזר: {"error": "הסבר"}`;
+
+async function analyze() {
+  if (!apiKey) {
+    showError('חסר מפתח API. עבור להגדרות והכנס מפתח Anthropic.');
+    return;
+  }
+
+  const hasImages = selectedImages.length > 0;
+  const pastedText = document.getElementById('pasteInput').value.trim();
+
+  showLoading(true);
+  document.getElementById('scanError').style.display = 'none';
+
+  try {
+    let contentBlocks = [];
+
+    if (hasImages) {
+      selectedImages.forEach((img, i) => {
+        if (selectedImages.length > 1) contentBlocks.push({ type:'text', text:`תמונה ${i+1}:` });
+        contentBlocks.push({ type:'image', source:{ type:'base64', media_type: img.mimeType, data: img.base64 } });
+      });
+      const multi = selectedImages.length > 1 ? `שים לב: ${selectedImages.length} תמונות של אותה קבלה לפי סדר גלילה — חבר לרשימה אחת.\n` : '';
+      contentBlocks.push({ type:'text', text: multi + PROMPT_SUFFIX });
+    } else {
+      contentBlocks = [{ type:'text', text:`להלן טקסט קבלת קנייה:\n---\n${pastedText}\n---\n${PROMPT_SUFFIX}` }];
+    }
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role:'user', content: contentBlocks }]
+      })
+    });
+
+    const data = await resp.json();
+
+    if (data.error) throw new Error(data.error.message || 'שגיאת API');
+
+    const raw = (data.content || []).map(b => b.text||'').join('');
+    const cleaned = raw.replace(/```json|```/g,'').trim();
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(match ? match[0] : cleaned);
+
+    showLoading(false);
+
+    if (parsed.error) { showError(parsed.error); return; }
+
+    currentResult = { ...parsed, savedAt: new Date().toISOString(), id: Date.now() };
+    showResult(currentResult, false);
+
+  } catch(e) {
+    showLoading(false);
+    showError(e.message || 'שגיאה לא צפויה');
+  }
+}
+
+function showError(msg) {
+  document.getElementById('scanErrorMsg').textContent = msg;
+  document.getElementById('scanError').style.display = 'flex';
+}
+
+function showLoading(on) {
+  document.getElementById('loadingOverlay').style.display = on ? 'flex' : 'none';
+}
+
+// ── Result display ───────────────────────────────────────────────
+function showResult(d, fromHistory) {
+  const sheet = document.getElementById('resultSheet');
+  document.getElementById('resultNavTitle').textContent = d.store || 'קבלה';
+  document.getElementById('resultSaveBtn').style.display = fromHistory ? 'none' : 'block';
+  currentResult = d;
+
+  const maxCat = d.categories?.length ? Math.max(...d.categories.map(c=>c.total)) : 1;
+  const avg = d.items_count > 0 ? (d.total / d.items_count).toFixed(1) : 0;
+
+  let html = `
+    <div class="store-card">
+      <div>
+        <div class="store-name">${d.store||'חנות לא ידועה'}</div>
+        <div class="store-date">${d.date||'תאריך לא זמין'}</div>
+      </div>
+      <div class="total-pill">₪${(d.total||0).toFixed(2)}</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val">${d.items_count||0}</div><div class="stat-lbl">פריטים</div></div>
+      <div class="stat-card"><div class="stat-val">₪${avg}</div><div class="stat-lbl">ממוצע</div></div>
+      <div class="stat-card"><div class="stat-val">${(d.categories||[]).length}</div><div class="stat-lbl">קטגוריות</div></div>
+    </div>`;
+
+  if (d.categories?.length) {
+    html += `<div class="section-lbl">לפי קטגוריה</div><div class="cats-grid">`;
+    d.categories.forEach((cat,i) => {
+      const color = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
+      const pct = d.total > 0 ? ((cat.total/d.total)*100).toFixed(0) : 0;
+      const barW = maxCat > 0 ? ((cat.total/maxCat)*100).toFixed(0) : 0;
+      html += `<div class="cat-card">
+        <div class="cat-name">${cat.name}</div>
+        <div class="cat-amount">₪${cat.total.toFixed(2)}</div>
+        <div class="cat-pct">${pct}% מהסל</div>
+        <div class="cat-bar"><div class="cat-bar-fill" style="width:${barW}%;background:${color}"></div></div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (d.items?.length) {
+    html += `<div class="section-lbl">פירוט פריטים</div><div class="items-list">`;
+    d.items.forEach(item => {
+      html += `<div class="item-row">
+        <div class="item-name">${item.name}</div>
+        ${item.qty > 1 ? `<div class="item-qty">×${item.qty}</div>` : ''}
+        <div class="item-price">₪${(item.total_price||item.unit_price||0).toFixed(2)}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (d.insights?.length) {
+    const icons = ['💡','📊','🛒','💰','⚡'];
+    html += `<div class="section-lbl">תובנות</div><div class="insights-card">`;
+    d.insights.forEach((ins,i) => {
+      html += `<div class="insight-row"><span>${icons[i%icons.length]}</span><span>${ins}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('resultContent').innerHTML = html;
+  sheet.style.display = 'block';
+  sheet.scrollTop = 0;
+}
+
+function closeResult() {
+  document.getElementById('resultSheet').style.display = 'none';
+}
+
+async function saveCurrentResult() {
+  if (!currentResult) return;
+  try {
+    await dbPut('receipts', { ...currentResult, id: currentResult.id || Date.now() });
+    document.getElementById('resultSaveBtn').style.display = 'none';
+    showToast('✅ נשמר בהיסטוריה');
+    // Reset scan
+    selectedImages = [];
+    renderPreviews();
+    document.getElementById('pasteInput').value = '';
+    updateAnalyzeBtn();
+  } catch(e) {
+    showToast('❌ שגיאה בשמירה');
+  }
+}
+
+// ── History ──────────────────────────────────────────────────────
+async function renderHistory() {
+  const list = document.getElementById('historyList');
+  let receipts = await dbGetAll('receipts');
+  receipts.sort((a,b) => new Date(b.savedAt) - new Date(a.savedAt));
+
+  if (receipts.length === 0) {
+    list.innerHTML = `<div class="history-empty"><div class="empty-icon">📋</div><div style="font-size:1rem;font-weight:700">אין קבלות שמורות</div><div style="font-size:0.85rem">סרוק קבלה ולחץ שמור</div></div>`;
+    return;
+  }
+
+  list.innerHTML = receipts.map(r => {
+    const d = new Date(r.savedAt);
+    const dateStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+    return `<div style="display:flex;align-items:center;gap:8px">
+      <div class="history-card" style="flex:1" onclick="viewHistoryItem(${r.id})">
+        <div>
+          <div class="history-store">${r.store||'קבלה'}</div>
+          <div class="history-meta">${dateStr} · ${r.items_count||0} פריטים</div>
+        </div>
+        <div class="history-total">₪${(r.total||0).toFixed(2)}</div>
+      </div>
+      <button class="history-delete" onclick="deleteHistoryItem(${r.id})">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+async function viewHistoryItem(id) {
+  const r = await dbGet('receipts', id);
+  if (r) showResult(r, true);
+}
+
+async function deleteHistoryItem(id) {
+  await dbDelete('receipts', id);
+  renderHistory();
+  showToast('🗑️ נמחק');
+}
+
+// ── Settings ─────────────────────────────────────────────────────
+async function saveSettings() {
+  const keyVal = document.getElementById('apiKeyInput').value.trim();
+  if (keyVal && !keyVal.startsWith('•')) {
+    apiKey = keyVal;
+    await dbPut('settings', { key:'apiKey', value: apiKey });
+  }
+  const defStore = document.getElementById('defaultStoreInput').value.trim();
+  await dbPut('settings', { key:'defaultStore', value: defStore });
+  showToast('✅ הגדרות נשמרו');
+  updateAnalyzeBtn();
+}
+
+async function renderStats() {
+  const receipts = await dbGetAll('receipts');
+  const total = receipts.reduce((s,r) => s + (r.total||0), 0);
+  const items = receipts.reduce((s,r) => s + (r.items_count||0), 0);
+
+  const catTotals = {};
+  receipts.forEach(r => (r.categories||[]).forEach(c => { catTotals[c.name] = (catTotals[c.name]||0) + c.total; }));
+  const topCat = Object.entries(catTotals).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('statsSummary').innerHTML = `
+    <h3>📊 סיכום כולל</h3>
+    <div class="summary-row"><span>קבלות שמורות</span><span class="summary-val">${receipts.length}</span></div>
+    <div class="summary-row"><span>סה"כ הוצאות</span><span class="summary-val">₪${total.toFixed(2)}</span></div>
+    <div class="summary-row"><span>סה"כ פריטים</span><span class="summary-val">${items}</span></div>
+    ${topCat ? `<div class="summary-row"><span>קטגוריה מובילה</span><span class="summary-val">${topCat[0]}</span></div>` : ''}`;
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Start ─────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
